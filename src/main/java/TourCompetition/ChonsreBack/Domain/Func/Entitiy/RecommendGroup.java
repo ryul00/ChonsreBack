@@ -1,6 +1,7 @@
 package TourCompetition.ChonsreBack.Domain.Func.Entitiy;
 
 import TourCompetition.ChonsreBack.Domain.Kakao.Entity.KakaoUser;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -40,6 +41,7 @@ public class RecommendGroup {
     private KakaoUser kakaoUser;
 
     @OneToMany(mappedBy = "recommendGroup", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Course> courseList = new ArrayList<>();
 
 }

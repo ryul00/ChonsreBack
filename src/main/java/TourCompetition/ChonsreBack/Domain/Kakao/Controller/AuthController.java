@@ -35,7 +35,7 @@ public class AuthController {
             response.put("kakaoId", kakaoUser.getKakaoId());
             response.put("nickname", kakaoUser.getNickname());
             response.put("connectedAt", kakaoUser.getConnectedAt());
-            response.put("profileImg", kakaoUser.getProfileimgUrl());
+            response.put("profileImg", kakaoUser.getProfileImgUrl());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             // 실패 시에도 Map<String, Object> 사용
@@ -114,7 +114,7 @@ public class AuthController {
 
             Map<String, Object> response = new HashMap<>();
             response.put("nickname", kakaoUser.getNickname());
-            response.put("profileImgUrl", kakaoUser.getProfileimgUrl());
+            response.put("profileImgUrl", kakaoUser.getProfileImgUrl());
 
 
             return ResponseEntity.ok(response);

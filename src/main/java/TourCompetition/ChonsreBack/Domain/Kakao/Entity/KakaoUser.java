@@ -21,14 +21,14 @@ public class KakaoUser {
     @Column(nullable = true, unique = true)
     private String nickname;
 
-    private String profileimgUrl;
+    private String profileImgUrl;
 
     private LocalDateTime connectedAt;
 
-    public KakaoUser(Long kakaoId, String nickname, LocalDateTime connectedAt, String profileimgUrl) {
+    public KakaoUser(Long kakaoId, String nickname, LocalDateTime connectedAt) {
         this.kakaoId = kakaoId;
         this.nickname = nickname;
         this.connectedAt = connectedAt;
-        this.profileimgUrl = profileimgUrl;
+        this.profileImgUrl = profileImgUrl;
     }
 }
