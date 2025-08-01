@@ -1,0 +1,28 @@
+spring:
+  config:
+    import: "optional:classpath:application-env.properties"
+  application:
+    name: ChonsreBack
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+    hibernate:
+      ddl-auto: update
+      naming:
+        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    database-platform: org.hibernate.dialect.MySQLDialect
+
+kakao:
+  redirect_uri: ${KAKAO_REDIRECT_URI}
+  api:
+    key: ${KAKAO_API_KEY}
