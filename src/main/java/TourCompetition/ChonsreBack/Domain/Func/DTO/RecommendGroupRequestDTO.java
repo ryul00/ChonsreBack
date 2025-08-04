@@ -9,7 +9,9 @@ import lombok.Setter;
 public class RecommendGroupRequestDTO {
     private String inpStartDate;
     private String inpEndDate;
-    private Integer inpPeopleCnt;
+    private Integer inpAdultCnt;
+    private Integer inpChildCnt;
+    private Integer inpBabyCnt;
     private String inpRegion;
     private RecommendGroup.InpCourseStyle inpStyle;
 }

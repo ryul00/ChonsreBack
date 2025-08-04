@@ -28,8 +28,19 @@ public class RecommendGroup {
     private Long groupId;
     private  String inpStartDate;
     private String inpEndDate;
-    private Integer inpPeopleCnt;
     private String inpRegion;
+
+    private Integer inpAdultCnt;
+    private Integer inpChildCnt;
+    private Integer inpBabyCnt;
+
+    @Transient
+    public Integer getTotalPeople() {
+        return (inpAdultCnt == null ? 0 : inpAdultCnt)
+                + (inpChildCnt == null ? 0 : inpChildCnt)
+                + (inpBabyCnt == null ? 0 : inpBabyCnt);
+    }
+
 
     @Enumerated(EnumType.STRING)
     private InpCourseStyle inpStyle;

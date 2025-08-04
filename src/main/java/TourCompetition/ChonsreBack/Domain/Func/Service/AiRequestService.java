@@ -82,34 +82,41 @@ public class AiRequestService {
 
     }
 
-    public Map<String, List<CourseDayDTO>>getRecommendedCourseStructure(String region, String startDate, String endDate, int people, String style) {
+    public Map<String, List<CourseDayDTO>> getRecommendedCourseStructure(
+            String region, String startDate, String endDate,
+            int adultCnt, int childCnt, int babyCnt,
+            String style) {
+
         String prompt = String.format("""
-        촌캉스는 '촌(시골)'과 '바캉스(휴가)'의 합성어로, 시골에서 휴가를 보내는 것을 의미해.
-        너는 촌캉스에 특화된 여행 전문가야.
+            촌캉스는 '촌(시골)'과 '바캉스(휴가)'의 합성어로, 시골에서 휴가를 보내는 것을 의미해.
+            너는 촌캉스에 특화된 여행 전문가야.
         
-        조건:
-        - 지역: %s
-        - 여행 기간: %s ~ %s
-        - 인원: %d명
-        - 여행 스타일: %s
-        
-        다음 조건에 따라 여행 코스를 추천해줘:
-        - 코스는 총 3개 (A, B, C)로 구성해.
-        - 각 코스는 여행 기간 동안의 일차(day)를 기준으로 구성하고,
-          각 일차에는 3~4개 장소(식당, 숙소 등)를 포함해.
-        - 각 장소는 장소명과 간단한 설명을 포함해야 해.
-        - 응답 JSON에는 지역, 스타일, 코스 ID 등의 메타데이터는 포함하지 마.
-        - 아래처럼 JSON 형식으로 응답해줘:
-        {
-          "A": [
-            { "day": 1, "places": [ { "placeName": "...", "description": "..." }, ... ] },
+            조건:
+            - 지역: %s
+            - 여행 기간: %s ~ %s
+            - 인원: 
+                성인: %d명
+                어린이: %d명
+                신생아: %d명
+            - 여행 스타일: %s
+            다음 조건에 따라 여행 코스를 추천해줘:
+            - 코스는 총 3개 (A, B, C)로 구성해.
+            - 각 코스는 여행 기간 동안의 일차(day)를 기준으로 구성하고,
+            - 각 일차에는 3~4개 장소(식당, 숙소 등)를 포함해.
+            - 각 장소는 장소명과 간단한 설명을 포함해야 해.
+            - 응답 JSON에는 지역, 스타일, 코스 ID 등의 메타데이터는 포함하지 마.
+            - 아래처럼 JSON 형식으로 응답해줘:
+                {
+                          "A": [
+                            { "day": 1, "places": [ { "placeName": "...", "description": "..." }, ... ] },
+                            ...
+                          ],
+                          "B": [...],
+                          "C": [...]
+                        }}
+             꼭 JSON 배열만 반환해줘. ``` 로 감싸지 마.
             ...
-          ],
-          "B": [...],
-          "C": [...]
-        }
-        꼭 JSON 배열만 반환해줘. ``` 로 감싸지 마.
-        """, region, startDate, endDate, people, style);
+            """, region, startDate, endDate, adultCnt, childCnt, babyCnt, style);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(apiKey);

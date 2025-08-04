@@ -38,16 +38,18 @@ public class RecommendService {
         String region = group.getInpRegion();
         String startDate = group.getInpStartDate();
         String endDate = group.getInpEndDate();
-        int people = group.getInpPeopleCnt();
+        int adult = group.getInpAdultCnt();
+        int child = group.getInpChildCnt();
+        int baby = group.getInpBabyCnt();
         String style = group.getInpStyle().name();
 
-        // 반환 타입 수정됨
         Map<String, List<CourseDayDTO>> gptCourseMap = aiRequestService.getRecommendedCourseStructure(
-                region, startDate, endDate, people, style);
+                region, startDate, endDate, adult, child, baby, style
+        );
 
         for (Map.Entry<String, List<CourseDayDTO>> entry : gptCourseMap.entrySet()) {
             String courseTitle = entry.getKey(); // A, B, C
-            List<CourseDayDTO> dayList = entry.getValue(); // 일차 리스트
+            List<CourseDayDTO> dayList = entry.getValue();
 
             Course course = new Course();
             course.setTitle(courseTitle);
@@ -77,17 +79,17 @@ public class RecommendService {
         }
     }
 
-
-
     // 그룹 저장용 메서드
     @Transactional
     public RecommendGroup saveRecommendGroup(RecommendGroupRequestDTO request, Long kakaoId) {
         RecommendGroup group = new RecommendGroup();
         group.setInpStartDate(request.getInpStartDate());
         group.setInpEndDate(request.getInpEndDate());
-        group.setInpPeopleCnt(request.getInpPeopleCnt());
         group.setInpRegion(request.getInpRegion());
         group.setInpStyle(request.getInpStyle());
+        group.setInpAdultCnt(request.getInpAdultCnt());
+        group.setInpChildCnt(request.getInpChildCnt());
+        group.setInpBabyCnt(request.getInpBabyCnt());
         group.setReqCreatedAt(LocalDateTime.now().toString());
 
         if (kakaoId != null) {
@@ -97,6 +99,19 @@ public class RecommendService {
         }
 
         return recommendGroupRepository.save(group);
+    }
+
+
+    public Map<String, List<CourseDayDTO>> generateCoursesWithoutSaving(RecommendGroupRequestDTO request) {
+        return aiRequestService.getRecommendedCourseStructure(
+                request.getInpRegion(),
+                request.getInpStartDate(),
+                request.getInpEndDate(),
+                request.getInpAdultCnt(),
+                request.getInpChildCnt(),
+                request.getInpBabyCnt(),
+                request.getInpStyle().name()
+        );
     }
 
 
