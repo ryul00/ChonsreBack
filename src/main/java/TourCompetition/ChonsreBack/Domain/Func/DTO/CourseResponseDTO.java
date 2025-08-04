@@ -5,14 +5,15 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
 public class CourseResponseDTO {
-    private Long courseId;
-    private String title;
-    private String description;
-    private String region;
-    private Course.CourseStyle style;
-    private String createdAt;
+    Long courseId;
+    String title;
+//    String region;
+//    String style;
+    List<CourseDayDTO> days;
+
 }

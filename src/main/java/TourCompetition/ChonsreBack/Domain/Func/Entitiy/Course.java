@@ -23,7 +23,7 @@ public class Course {
     private  Long courseId;
 
     private String title;
-    private  String description;
+//    private  String description;
     private String region;
     private String createdAt;
 

@@ -26,3 +26,6 @@ kakao:
   redirect_uri: ${KAKAO_REDIRECT_URI}
   api:
     key: ${KAKAO_API_KEY}
+
+openai:
+  api-key: ${OPENAI_API_KEY}

@@ -1,7 +1,10 @@
 package TourCompetition.ChonsreBack.Domain.Func.Service;
 
-import TourCompetition.ChonsreBack.Domain.Func.DTO.CourseResponseDTO;
-import TourCompetition.ChonsreBack.Domain.Func.DTO.RecommendGroupRequestDTO;
+import TourCompetition.ChonsreBack.Domain.Func.DTO.*;
+import TourCompetition.ChonsreBack.Domain.Func.Entitiy.CourseDay;
+import TourCompetition.ChonsreBack.Domain.Func.Entitiy.CoursePlace;
+import TourCompetition.ChonsreBack.Domain.Func.Repository.CourseDayRepository;
+import TourCompetition.ChonsreBack.Domain.Func.Repository.CoursePlaceRepository;
 import org.springframework.transaction.annotation.Transactional;
 import TourCompetition.ChonsreBack.Domain.Func.DTO.RecommendGroupRequestDTO;
 import TourCompetition.ChonsreBack.Domain.Func.Entitiy.Course;
@@ -16,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,10 +29,59 @@ public class RecommendService {
     private final RecommendGroupRepository recommendGroupRepository;
     private final CourseRepository courseRepository;
     private final KakaoUserRepository kakaoUserRepository;
+    private final AiRequestService aiRequestService;
+    private final CourseDayRepository courseDayRepository;
+    private final CoursePlaceRepository coursePlaceRepository;
 
-    // 사용자 정보를 받아 추천 그룹 ABC 생성
     @Transactional
-    public Long createRecommendGroup(RecommendGroupRequestDTO request, Long kakaoId) {
+    public void generateCoursesFromGpt(RecommendGroup group) {
+        String region = group.getInpRegion();
+        String startDate = group.getInpStartDate();
+        String endDate = group.getInpEndDate();
+        int people = group.getInpPeopleCnt();
+        String style = group.getInpStyle().name();
+
+        // 반환 타입 수정됨
+        Map<String, List<CourseDayDTO>> gptCourseMap = aiRequestService.getRecommendedCourseStructure(
+                region, startDate, endDate, people, style);
+
+        for (Map.Entry<String, List<CourseDayDTO>> entry : gptCourseMap.entrySet()) {
+            String courseTitle = entry.getKey(); // A, B, C
+            List<CourseDayDTO> dayList = entry.getValue(); // 일차 리스트
+
+            Course course = new Course();
+            course.setTitle(courseTitle);
+            course.setStyle(Course.CourseStyle.valueOf(style));
+            course.setRegion(region);
+            course.setCreatedAt(LocalDateTime.now().toString());
+            course.setRecommendGroup(group);
+
+            courseRepository.save(course);
+
+            for (CourseDayDTO dayDto : dayList) {
+                CourseDay courseDay = new CourseDay();
+                courseDay.setDayNum(dayDto.getDay());
+                courseDay.setCourse(course);
+                courseDayRepository.save(courseDay);
+
+                int order = 1;
+                for (CoursePlaceDTO placeDto : dayDto.getPlaces()) {
+                    CoursePlace place = new CoursePlace();
+                    place.setOrderNum(order++);
+                    place.setPlaceName(placeDto.getPlaceName());
+                    place.setPlaceDesc(placeDto.getDescription());
+                    place.setCourseDay(courseDay);
+                    coursePlaceRepository.save(place);
+                }
+            }
+        }
+    }
+
+
+
+    // 그룹 저장용 메서드
+    @Transactional
+    public RecommendGroup saveRecommendGroup(RecommendGroupRequestDTO request, Long kakaoId) {
         RecommendGroup group = new RecommendGroup();
         group.setInpStartDate(request.getInpStartDate());
         group.setInpEndDate(request.getInpEndDate());
@@ -43,25 +96,12 @@ public class RecommendService {
             group.setKakaoUser(user);
         }
 
-        RecommendGroup savedGroup = recommendGroupRepository.save(group);
-
-        // 더미 코스 A, B, C 생성
-        for (int i = 0; i < 3; i++) {
-            Course course = new Course();
-            course.setTitle(group.getInpRegion() + " 코스 " + (char)('A' + i));
-            course.setDescription("추천된 더미 코스입니다.");
-            course.setRegion(group.getInpRegion());
-            course.setStyle(Course.CourseStyle.valueOf(group.getInpStyle().name())); // Enum 매핑
-            course.setCreatedAt(LocalDateTime.now().toString());
-            course.setRecommendGroup(savedGroup);
-
-            courseRepository.save(course);
-        }
-
-        return savedGroup.getGroupId();
+        return recommendGroupRepository.save(group);
     }
 
-    // 추천 코스 그룹 조회 로직
+
+
+    // 추천된 코스 조회
     @Transactional(readOnly = true)
     public List<CourseResponseDTO> getCoursesByGroupId(Long groupId) {
         RecommendGroup group = recommendGroupRepository.findById(groupId)
@@ -69,19 +109,35 @@ public class RecommendService {
 
         List<Course> courses = courseRepository.findByRecommendGroup(group);
 
-        return courses.stream()
-                .map(course -> {
-                    CourseResponseDTO dto = new CourseResponseDTO();
-                    dto.setCourseId(course.getCourseId());
-                    dto.setTitle(course.getTitle());
-                    dto.setDescription(course.getDescription());
-                    dto.setRegion(course.getRegion());
-                    dto.setStyle(course.getStyle());
-                    dto.setCreatedAt(course.getCreatedAt());
-                    return dto;
-                })
-                .collect(Collectors.toList());
+        return courses.stream().map(course -> {
+            CourseResponseDTO courseDTO = new CourseResponseDTO();
+            courseDTO.setCourseId(course.getCourseId());
+            courseDTO.setTitle(course.getTitle());
+
+            // 코스의 일차들을 가져옴
+            List<CourseDay> courseDays = courseDayRepository.findByCourse(course);
+            List<CourseDayDTO> dayDTOs = courseDays.stream().map(day -> {
+                CourseDayDTO dayDTO = new CourseDayDTO();
+                dayDTO.setDay(day.getDayNum());
+
+                // 각 일차의 장소들 가져오기
+                List<CoursePlace> places = coursePlaceRepository.findByCourseDay(day);
+                List<CoursePlaceDTO> placeDTOs = places.stream().map(place -> {
+                    CoursePlaceDTO placeDTO = new CoursePlaceDTO();
+                    placeDTO.setPlaceName(place.getPlaceName());
+                    placeDTO.setDescription(place.getPlaceDesc());
+                    return placeDTO;
+                }).toList();
+
+                dayDTO.setPlaces(placeDTOs);
+                return dayDTO;
+            }).toList();
+
+            courseDTO.setDays(dayDTOs);
+            return courseDTO;
+        }).toList();
     }
+
 
 
 
