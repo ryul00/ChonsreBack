@@ -1,4 +1,4 @@
-package TourCompetition.ChonsreBack.Domain.Func.DTO;
+package TourCompetition.ChonsreBack.Domain.Func.DTO.AiCourse;
 
 import lombok.Getter;
 import lombok.Setter;

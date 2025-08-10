@@ -30,8 +30,11 @@ public class RecommendGroup {
     private String inpEndDate;
     private String inpRegion;
 
+
     private Integer inpAdultCnt;
+
     private Integer inpChildCnt;
+
     private Integer inpBabyCnt;
 
     @Transient

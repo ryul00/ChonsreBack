@@ -1,12 +1,14 @@
 package TourCompetition.ChonsreBack.Domain.Func.Service;
 
-import TourCompetition.ChonsreBack.Domain.Func.DTO.*;
+import TourCompetition.ChonsreBack.Domain.Func.DTO.AiCourse.CourseDayDTO;
+import TourCompetition.ChonsreBack.Domain.Func.DTO.AiCourse.CoursePlaceDTO;
+import TourCompetition.ChonsreBack.Domain.Func.DTO.AiCourse.CourseResponseDTO;
 import TourCompetition.ChonsreBack.Domain.Func.Entitiy.CourseDay;
 import TourCompetition.ChonsreBack.Domain.Func.Entitiy.CoursePlace;
 import TourCompetition.ChonsreBack.Domain.Func.Repository.CourseDayRepository;
 import TourCompetition.ChonsreBack.Domain.Func.Repository.CoursePlaceRepository;
 import org.springframework.transaction.annotation.Transactional;
-import TourCompetition.ChonsreBack.Domain.Func.DTO.RecommendGroupRequestDTO;
+import TourCompetition.ChonsreBack.Domain.Func.DTO.AiCourse.RecommendGroupRequestDTO;
 import TourCompetition.ChonsreBack.Domain.Func.Entitiy.Course;
 import TourCompetition.ChonsreBack.Domain.Func.Entitiy.RecommendGroup;
 import TourCompetition.ChonsreBack.Domain.Func.Repository.CourseRepository;
@@ -20,7 +22,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -57,6 +58,7 @@ public class RecommendService {
             course.setRegion(region);
             course.setCreatedAt(LocalDateTime.now().toString());
             course.setRecommendGroup(group);
+            course.setTemplate(false);
 
             courseRepository.save(course);
 
@@ -102,8 +104,8 @@ public class RecommendService {
     }
 
 
-    public Map<String, List<CourseDayDTO>> generateCoursesWithoutSaving(RecommendGroupRequestDTO request) {
-        return aiRequestService.getRecommendedCourseStructure(
+    public List<CourseResponseDTO> generateCoursesWithoutSaving(RecommendGroupRequestDTO request) {
+        Map<String, List<CourseDayDTO>> gptCourseMap = aiRequestService.getRecommendedCourseStructure(
                 request.getInpRegion(),
                 request.getInpStartDate(),
                 request.getInpEndDate(),
@@ -112,7 +114,18 @@ public class RecommendService {
                 request.getInpBabyCnt(),
                 request.getInpStyle().name()
         );
+
+        return gptCourseMap.entrySet().stream().map(entry -> {
+            CourseResponseDTO courseDTO = new CourseResponseDTO();
+            courseDTO.setCourseId(null); // 비회원은 저장되지 않으므로 0L 또는 null
+            courseDTO.setTitle(entry.getKey()); // 예: A, B, C
+            courseDTO.setDays(entry.getValue()); // 이미 List<CourseDayDTO>
+
+
+            return courseDTO;
+        }).toList();
     }
+
 
 
 

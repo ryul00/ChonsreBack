@@ -19,15 +19,20 @@ public class Course {
     }
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(nullable = false, unique = true)
     private  Long courseId;
 
+    @Column(nullable = false)
     private String title;
 //    private  String description;
     private String region;
+
     private String createdAt;
 
+    @Column(nullable = false)
+    private boolean isTemplate = false;   // 추천(false) vs 템플릿(true)
+
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private CourseStyle style;  // 여행 스타일
 
     @ManyToOne

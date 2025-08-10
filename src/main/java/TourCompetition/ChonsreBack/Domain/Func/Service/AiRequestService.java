@@ -1,6 +1,6 @@
 package TourCompetition.ChonsreBack.Domain.Func.Service;
 
-import TourCompetition.ChonsreBack.Domain.Func.DTO.CourseDayDTO;
+import TourCompetition.ChonsreBack.Domain.Func.DTO.AiCourse.CourseDayDTO;
 //import TourCompetition.ChonsreBack.Domain.Func.DTO.GptCourseDTO;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -60,7 +60,13 @@ public class AiRequestService {
         );
 
         Map<String, Object> body = response.getBody();
+        if (body == null || !body.containsKey("choices")) {
+            throw new RuntimeException("GPT 응답 형식이 올바르지 않습니다 (choices 누락)");
+        }
         List<Map<String, Object>> choices = (List<Map<String, Object>>) body.get("choices");
+        if (choices.isEmpty() || !choices.get(0).containsKey("message")) {
+            throw new RuntimeException("GPT 응답에 message가 없습니다.");
+        }
         Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
 
         String content = message.get("content").toString();
@@ -72,11 +78,15 @@ public class AiRequestService {
                     .trim();
         }
 
+        // 파싱 및 유효성 체크
         try {
             List<Map<String, Object>> parsed = new ObjectMapper().readValue(content, new TypeReference<>() {});
+            if (parsed.isEmpty() || !parsed.get(0).containsKey("recommendedRegion")) {
+                throw new RuntimeException("GPT 추천 결과가 비어 있거나 형식이 잘못됨: " + content);
+            }
             return parsed.get(0).get("recommendedRegion").toString();
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("GPT 지역 추천 응답 파싱 실패", e);
+            throw new RuntimeException("GPT 지역 추천 응답 파싱 실패: " + content, e);
         }
 
 

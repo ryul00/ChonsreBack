@@ -1,9 +1,7 @@
 package TourCompetition.ChonsreBack.Domain.Func.Controller;
 
-import TourCompetition.ChonsreBack.Domain.Func.DTO.CourseDayDTO;
-import TourCompetition.ChonsreBack.Domain.Func.DTO.CourseResponseDTO;
-import TourCompetition.ChonsreBack.Domain.Func.DTO.RecommendGroupRequestDTO;
-import TourCompetition.ChonsreBack.Domain.Func.Entitiy.Course;
+import TourCompetition.ChonsreBack.Domain.Func.DTO.AiCourse.CourseResponseDTO;
+import TourCompetition.ChonsreBack.Domain.Func.DTO.AiCourse.RecommendGroupRequestDTO;
 import TourCompetition.ChonsreBack.Domain.Func.Entitiy.RecommendGroup;
 import TourCompetition.ChonsreBack.Domain.Func.Repository.RecommendGroupRepository;
 import TourCompetition.ChonsreBack.Domain.Func.Service.AiRequestService;
@@ -74,14 +72,14 @@ public class RecommendGroupController {
             ));
         }
 
-        // 비회원: 그룹 저장 없이, 코스만 즉시 반환
-        Map<String, List<CourseDayDTO>> courseMap = recommendService.generateCoursesWithoutSaving(request);
+
+        //  비회원: 코스만 즉시 생성해서 CourseResponseDTO 형태로 반환
+        List<CourseResponseDTO> courseDTOs = recommendService.generateCoursesWithoutSaving(request);
 
         return ResponseEntity.ok(Map.of(
-                "courses", courseMap
+                "courses", courseDTOs
         ));
     }
-
 
 
 
