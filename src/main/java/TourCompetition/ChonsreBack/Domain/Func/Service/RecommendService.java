@@ -34,28 +34,38 @@ public class RecommendService {
     private final CourseDayRepository courseDayRepository;
     private final CoursePlaceRepository coursePlaceRepository;
 
+    /**
+     * 그룹 저장 후 DB에 코스도 저장하는 경우
+     */
     @Transactional
-    public void generateCoursesFromGpt(RecommendGroup group) {
-        String region = group.getInpRegion();
-        String startDate = group.getInpStartDate();
-        String endDate = group.getInpEndDate();
-        int adult = group.getInpAdultCnt();
-        int child = group.getInpChildCnt();
-        int baby = group.getInpBabyCnt();
-        String style = group.getInpStyle().name();
+    public void generateCoursesFromDatasetWithGpt(RecommendGroup group) {
+        Map<String, List<CourseDayDTO>> courseMap =
+                aiRequestService.getRecommendedCourseStructure(
+                        "전라남도",
+                        group.getInpStartDate(),
+                        group.getInpEndDate(),
+                        safeInt(group.getInpAdultCnt()),
+                        safeInt(group.getInpChildCnt()),
+                        safeInt(group.getInpBabyCnt()),
+                        group.getInpStyle() != null ? group.getInpStyle().name() : "etc"
+                );
 
-        Map<String, List<CourseDayDTO>> gptCourseMap = aiRequestService.getRecommendedCourseStructure(
-                region, startDate, endDate, adult, child, baby, style
-        );
-
-        for (Map.Entry<String, List<CourseDayDTO>> entry : gptCourseMap.entrySet()) {
-            String courseTitle = entry.getKey(); // A, B, C
+        for (Map.Entry<String, List<CourseDayDTO>> entry : courseMap.entrySet()) {
+            String label = entry.getKey(); // A, B, C
             List<CourseDayDTO> dayList = entry.getValue();
 
+            // 첫 장소명으로 county 조회
+            String firstPlaceName = null;
+            if (!dayList.isEmpty() && dayList.get(0).getPlaces() != null && !dayList.get(0).getPlaces().isEmpty()) {
+                firstPlaceName = dayList.get(0).getPlaces().get(0).getPlaceName();
+            }
+            String countyTitle = aiRequestService.findCountyByPlaceName(firstPlaceName);
+
             Course course = new Course();
-            course.setTitle(courseTitle);
-            course.setStyle(Course.CourseStyle.valueOf(style));
-            course.setRegion(region);
+            course.setTitle(countyTitle);                 // 시군을 title로
+            course.setCourseLabel(label);
+            course.setStyle(toCourseStyle(group.getInpStyle()));
+            course.setRegion("전라남도");                  // region은 전남 고정
             course.setCreatedAt(LocalDateTime.now().toString());
             course.setRecommendGroup(group);
             course.setTemplate(false);
@@ -81,55 +91,67 @@ public class RecommendService {
         }
     }
 
-    // 그룹 저장용 메서드
+
+    /**
+     * 비회원 등 → DB 저장 안 하고 코스만 미리보기
+     */
+    public List<CourseResponseDTO> generateCoursesWithoutSaving(RecommendGroupRequestDTO request) {
+        Map<String, List<CourseDayDTO>> courseMap =
+                aiRequestService.getRecommendedCourseStructure(
+                        "전라남도",
+                        request.getInpStartDate(),
+                        request.getInpEndDate(),
+                        safeInt(request.getInpAdultCnt()),
+                        safeInt(request.getInpChildCnt()),
+                        safeInt(request.getInpBabyCnt()),
+                        request.getInpStyle() != null ? request.getInpStyle().name() : "etc"
+                );
+
+        return courseMap.entrySet().stream().map(entry -> {
+            List<CourseDayDTO> days = entry.getValue();
+
+            // 첫 장소명으로 county 조회
+            String firstPlaceName = null;
+            if (!days.isEmpty() && days.get(0).getPlaces() != null && !days.get(0).getPlaces().isEmpty()) {
+                firstPlaceName = days.get(0).getPlaces().get(0).getPlaceName();
+            }
+            String countyTitle = aiRequestService.findCountyByPlaceName(firstPlaceName);
+
+            CourseResponseDTO dto = new CourseResponseDTO();
+            dto.setCourseId(null);
+            dto.setTitle(countyTitle);          // 시군을 title로
+            dto.setCourseLabel(entry.getKey());
+            dto.setDays(days);
+            return dto;
+        }).toList();
+    }
+
+
+    /**
+     * RecommendGroup 생성 (DB 저장)
+     */
     @Transactional
     public RecommendGroup saveRecommendGroup(RecommendGroupRequestDTO request, Long kakaoId) {
         RecommendGroup group = new RecommendGroup();
         group.setInpStartDate(request.getInpStartDate());
         group.setInpEndDate(request.getInpEndDate());
-        group.setInpRegion(request.getInpRegion());
         group.setInpStyle(request.getInpStyle());
         group.setInpAdultCnt(request.getInpAdultCnt());
         group.setInpChildCnt(request.getInpChildCnt());
         group.setInpBabyCnt(request.getInpBabyCnt());
-        group.setReqCreatedAt(LocalDateTime.now().toString());
+        group.setReqCreatedAt(java.time.LocalDateTime.now().toString());
 
         if (kakaoId != null) {
             KakaoUser user = kakaoUserRepository.findByKakaoId(kakaoId)
                     .orElseThrow(() -> new RuntimeException("사용자 없음"));
             group.setKakaoUser(user);
         }
-
         return recommendGroupRepository.save(group);
     }
 
-
-    public List<CourseResponseDTO> generateCoursesWithoutSaving(RecommendGroupRequestDTO request) {
-        Map<String, List<CourseDayDTO>> gptCourseMap = aiRequestService.getRecommendedCourseStructure(
-                request.getInpRegion(),
-                request.getInpStartDate(),
-                request.getInpEndDate(),
-                request.getInpAdultCnt(),
-                request.getInpChildCnt(),
-                request.getInpBabyCnt(),
-                request.getInpStyle().name()
-        );
-
-        return gptCourseMap.entrySet().stream().map(entry -> {
-            CourseResponseDTO courseDTO = new CourseResponseDTO();
-            courseDTO.setCourseId(null); // 비회원은 저장되지 않으므로 0L 또는 null
-            courseDTO.setTitle(entry.getKey()); // 예: A, B, C
-            courseDTO.setDays(entry.getValue()); // 이미 List<CourseDayDTO>
-
-
-            return courseDTO;
-        }).toList();
-    }
-
-
-
-
-    // 추천된 코스 조회
+    /**
+     * 그룹 ID로 DB에 저장된 추천 코스 조회
+     */
     @Transactional(readOnly = true)
     public List<CourseResponseDTO> getCoursesByGroupId(Long groupId) {
         RecommendGroup group = recommendGroupRepository.findById(groupId)
@@ -138,17 +160,16 @@ public class RecommendService {
         List<Course> courses = courseRepository.findByRecommendGroup(group);
 
         return courses.stream().map(course -> {
-            CourseResponseDTO courseDTO = new CourseResponseDTO();
-            courseDTO.setCourseId(course.getCourseId());
-            courseDTO.setTitle(course.getTitle());
+            CourseResponseDTO dto = new CourseResponseDTO();
+            dto.setCourseId(course.getCourseId());
+            dto.setTitle(course.getTitle());
+            dto.setCourseLabel(course.getCourseLabel());
 
-            // 코스의 일차들을 가져옴
             List<CourseDay> courseDays = courseDayRepository.findByCourse(course);
             List<CourseDayDTO> dayDTOs = courseDays.stream().map(day -> {
                 CourseDayDTO dayDTO = new CourseDayDTO();
                 dayDTO.setDay(day.getDayNum());
 
-                // 각 일차의 장소들 가져오기
                 List<CoursePlace> places = coursePlaceRepository.findByCourseDay(day);
                 List<CoursePlaceDTO> placeDTOs = places.stream().map(place -> {
                     CoursePlaceDTO placeDTO = new CoursePlaceDTO();
@@ -161,12 +182,20 @@ public class RecommendService {
                 return dayDTO;
             }).toList();
 
-            courseDTO.setDays(dayDTOs);
-            return courseDTO;
+            dto.setDays(dayDTOs);
+            return dto;
         }).toList();
     }
 
+    // 유틸
+    private int safeInt(Integer v) { return v == null ? 0 : v; }
 
-
-
+    private Course.CourseStyle toCourseStyle(RecommendGroup.InpCourseStyle inp) {
+        if (inp == null) return Course.CourseStyle.etc;
+        return switch (inp) {
+            case farm -> Course.CourseStyle.farm;
+            case fishing -> Course.CourseStyle.fishing;
+            case etc -> Course.CourseStyle.etc;
+        };
+    }
 }

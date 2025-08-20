@@ -29,3 +29,21 @@ kakao:
 
 openai:
   api-key: ${OPENAI_API_KEY}
+
+tourapi:
+  base-url: "https://apis.data.go.kr/B551011/KorService2"
+  key-enc: 6XGuvzEbcmoMaEf15e1pQbCb7BPtY7Mp6Om0bikt%2Brxk70Bs9h9%2BFTXf%2FgSXKIEd%2FC5HpnVR4rxM225ucrrRpQ%3D%3D
+  key-dec: 6XGuvzEbcmoMaEf15e1pQbCb7BPtY7Mp6Om0bikt+rxk70Bs9h9+FTXf/gSXKIEd/C5HpnVR4rxM225ucrrRpQ==
+
+
+dataset:
+  jeonnam:
+    path: datasets/jeonnam_rural.xlsx
+  region-fixed: "전라남도"               # '시도'는 없으니 전남 고정값 추가
+  columns:
+    category: "구분"       # 농촌/어촌/기타 등
+    county: "시군"         # 예: 여수시, 순천시
+    place: "장소명"        # 마을 이름
+    address: "주소"        # 전체 주소
+    desc: "체험"           # 체험 프로그램
+

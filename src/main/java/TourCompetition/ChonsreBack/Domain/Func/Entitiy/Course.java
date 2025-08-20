@@ -10,19 +10,22 @@ import lombok.Setter;
 @Table(name = "Course")
 public class Course {
     public enum CourseStyle {
-        가족여행,
-        힐링여행,
-        우정여행,
-        데이트,
-        뚜벅이,
-        그외
+        farm,
+        fishing,
+        etc
     }
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private  Long courseId;
 
+    // 코스 제목 (기본 : 지역명)
     @Column(nullable = false)
     private String title;
+
+    // A,B,C 코스
+    @Column(length = 10)
+    private String courseLabel;
+
 //    private  String description;
     private String region;
 
@@ -38,5 +41,4 @@ public class Course {
     @ManyToOne
     @JoinColumn(name = "groupId", nullable = false)
     private RecommendGroup recommendGroup;
-
 }

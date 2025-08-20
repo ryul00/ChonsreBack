@@ -12,7 +12,7 @@ public class RecommendGroupRequestDTO {
     private Integer inpAdultCnt;
     private Integer inpChildCnt;
     private Integer inpBabyCnt;
-    private String inpRegion;
+//    private String inpRegion;
     private RecommendGroup.InpCourseStyle inpStyle;
     private Boolean isTemplate = false;   // true면 새 그룹 생성 + 코스 isTemplate=true
 }

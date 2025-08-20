@@ -15,12 +15,9 @@ import java.util.List;
 @Table(name = "Course_Recommend_Group")
 public class RecommendGroup {
     public enum InpCourseStyle {
-        가족여행,
-        힐링여행,
-        우정여행,
-        데이트,
-        뚜벅이,
-        그외
+        farm,
+        fishing,
+        etc
     }
     @Id
     @Column(nullable = false, unique = true)
@@ -28,7 +25,7 @@ public class RecommendGroup {
     private Long groupId;
     private  String inpStartDate;
     private String inpEndDate;
-    private String inpRegion;
+//    private String inpRegion;
 
 
     private Integer inpAdultCnt;
