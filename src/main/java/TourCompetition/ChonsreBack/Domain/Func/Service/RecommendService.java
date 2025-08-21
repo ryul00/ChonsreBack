@@ -91,10 +91,6 @@ public class RecommendService {
         }
     }
 
-
-    /**
-     * 비회원 등 → DB 저장 안 하고 코스만 미리보기
-     */
     public List<CourseResponseDTO> generateCoursesWithoutSaving(RecommendGroupRequestDTO request) {
         Map<String, List<CourseDayDTO>> courseMap =
                 aiRequestService.getRecommendedCourseStructure(
@@ -110,21 +106,31 @@ public class RecommendService {
         return courseMap.entrySet().stream().map(entry -> {
             List<CourseDayDTO> days = entry.getValue();
 
-            // 첫 장소명으로 county 조회
-            String firstPlaceName = null;
-            if (!days.isEmpty() && days.get(0).getPlaces() != null && !days.get(0).getPlaces().isEmpty()) {
-                firstPlaceName = days.get(0).getPlaces().get(0).getPlaceName();
+            // 각 place에 address 세팅
+            for (CourseDayDTO day : days) {
+                if (day.getPlaces() == null) continue;
+                for (CoursePlaceDTO p : day.getPlaces()) {
+                    String addr = aiRequestService.findAddressByPlaceName(p.getPlaceName());
+                    p.setAddress(addr);
+                }
             }
-            String countyTitle = aiRequestService.findCountyByPlaceName(firstPlaceName);
+
+            // (선택) title을 시군으로 쓰고 싶다면 county 조회해서 세팅
+            String firstPlaceName = (days != null && !days.isEmpty()
+                    && days.get(0).getPlaces() != null && !days.get(0).getPlaces().isEmpty())
+                    ? days.get(0).getPlaces().get(0).getPlaceName()
+                    : null;
+            String countyTitle = aiRequestService.findCountyByPlaceName(firstPlaceName); // 헬퍼가 있다면 사용
 
             CourseResponseDTO dto = new CourseResponseDTO();
             dto.setCourseId(null);
-            dto.setTitle(countyTitle);          // 시군을 title로
+            dto.setTitle(countyTitle != null && !countyTitle.isBlank() ? countyTitle : "전라남도");
             dto.setCourseLabel(entry.getKey());
             dto.setDays(days);
             return dto;
         }).toList();
     }
+
 
 
     /**
@@ -175,8 +181,15 @@ public class RecommendService {
                     CoursePlaceDTO placeDTO = new CoursePlaceDTO();
                     placeDTO.setPlaceName(place.getPlaceName());
                     placeDTO.setDescription(place.getPlaceDesc());
+
+                    // DB 값 우선, 없으면 엑셀에서 조회
+                    String addr = (place.getAddress() != null && !place.getAddress().isBlank())
+                            ? place.getAddress()
+                            : aiRequestService.findAddressByPlaceName(place.getPlaceName());
+                    placeDTO.setAddress(addr);
                     return placeDTO;
                 }).toList();
+
 
                 dayDTO.setPlaces(placeDTOs);
                 return dayDTO;
@@ -186,6 +199,7 @@ public class RecommendService {
             return dto;
         }).toList();
     }
+
 
     // 유틸
     private int safeInt(Integer v) { return v == null ? 0 : v; }

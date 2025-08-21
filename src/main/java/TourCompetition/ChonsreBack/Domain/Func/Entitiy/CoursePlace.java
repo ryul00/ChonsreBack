@@ -18,6 +18,9 @@ public class CoursePlace {
     private String placeDesc; // 장소별 설명
     private String ImgUrl; // 장소 이미지
 
+    @Column(length = 255, nullable = true)  // 주소 컬럼 추가 (nullable)
+    private String address;
+
     @ManyToOne
     @JoinColumn(name = "dayId", nullable = false)
     private CourseDay courseDay;

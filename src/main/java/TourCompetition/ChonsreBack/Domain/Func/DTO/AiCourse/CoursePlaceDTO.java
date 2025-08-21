@@ -8,4 +8,5 @@ import lombok.Setter;
 public class CoursePlaceDTO {
     String placeName;
     String description;
+    String address;
 }

@@ -84,6 +84,19 @@ public class AiRequestService {
         return "전라남도"; // 매칭 실패 시 기본값
     }
 
+    public String findAddressByPlaceName(String placeName) {
+        if (placeName == null) return "";
+        if (cachedRows == null || cachedRows.isEmpty()) {
+            loadDatasetOnce();
+        }
+        for (var r : cachedRows) {
+            if (placeName.equals(r.place)) {
+                return StringUtils.defaultString(r.address);
+            }
+        }
+        return "";
+    }
+
     private List<PlaceRow> cachedRows;
 
     @PostConstruct
