@@ -26,9 +26,7 @@ public class Course {
     @Column(length = 10)
     private String courseLabel;
 
-//    private  String description;
     private String region;
-
     private String createdAt;
 
     @Column(nullable = false)
@@ -41,4 +39,15 @@ public class Course {
     @ManyToOne
     @JoinColumn(name = "groupId", nullable = false)
     private RecommendGroup recommendGroup;
+
+    // 숙소 관련 엔티티
+    @Column(name = "acc_name", length = 200)
+    private String accommodationName;
+
+    @Column(name = "acc_address", length = 300)
+    private String accommodationAddress;
+
+    @Lob // 길어질 수 있으니 가급적 TEXT
+    @Column(name = "acc_description")
+    private String accommodationDescription;
 }

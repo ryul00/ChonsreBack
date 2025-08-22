@@ -5,9 +5,8 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class CoursePlaceDTO {
-    String placeName;
-    String description;
-    String address;
-    String imgUrl;
+public class AccommodationDTO {
+    private String name;
+    private String address;
+    private String description;
 }

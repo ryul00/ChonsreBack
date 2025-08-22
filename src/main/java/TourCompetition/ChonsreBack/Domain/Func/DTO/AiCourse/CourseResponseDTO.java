@@ -13,4 +13,6 @@ public class CourseResponseDTO {
     String courseLabel;
     String title;
     List<CourseDayDTO> days;
+    // 코스 지역의 숙소 1개
+    AccommodationDTO accommodation;
 }

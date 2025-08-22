@@ -1,14 +1,11 @@
 package TourCompetition.ChonsreBack.Domain.Func.Service;
 
-import TourCompetition.ChonsreBack.Domain.Func.DTO.AiCourse.CourseDayDTO;
-import TourCompetition.ChonsreBack.Domain.Func.DTO.AiCourse.CoursePlaceDTO;
-import TourCompetition.ChonsreBack.Domain.Func.DTO.AiCourse.CourseResponseDTO;
+import TourCompetition.ChonsreBack.Domain.Func.DTO.AiCourse.*;
 import TourCompetition.ChonsreBack.Domain.Func.Entitiy.CourseDay;
 import TourCompetition.ChonsreBack.Domain.Func.Entitiy.CoursePlace;
 import TourCompetition.ChonsreBack.Domain.Func.Repository.CourseDayRepository;
 import TourCompetition.ChonsreBack.Domain.Func.Repository.CoursePlaceRepository;
 import org.springframework.transaction.annotation.Transactional;
-import TourCompetition.ChonsreBack.Domain.Func.DTO.AiCourse.RecommendGroupRequestDTO;
 import TourCompetition.ChonsreBack.Domain.Func.Entitiy.Course;
 import TourCompetition.ChonsreBack.Domain.Func.Entitiy.RecommendGroup;
 import TourCompetition.ChonsreBack.Domain.Func.Repository.CourseRepository;
@@ -22,9 +19,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.*;
-
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 @Service
@@ -62,7 +57,10 @@ public class RecommendService {
         );
 
         int totalDays = computeTripDays(group.getInpStartDate(), group.getInpEndDate());
+
         Integer jeonnam = tourApiService.findJeonnamAreaCode();
+
+
 
         for (Map.Entry<String, List<CourseDayDTO>> entry : courseMap.entrySet()) {
             String label = entry.getKey();
@@ -89,48 +87,50 @@ public class RecommendService {
                 int needCount = (totalDays > 1 ? 3 * (totalDays - 1) : 0) + extraForDay1;
 
                 // 중복(엑셀 대표 장소명) 제거를 위해 set 준비
-                java.util.Set<String> usedNames = new java.util.HashSet<>();
+                Set<String> usedNames = new HashSet<>();
                 if (excelPlace != null) usedNames.add(excelPlace.getPlaceName());
 
-                // 관광지 목록 가져오기
-                List<TourApiService.TourSpot> fetched = tourApiService.getTopAttractions(jeonnam, sigungu, needCount * 2); // 여유분
+                // 관광지 목록 가져오기 (여유분 포함)
+                List<TourApiService.TourSpot> fetched = tourApiService.getTopAttractions(jeonnam, sigungu, Math.max(needCount * 2, 6));
                 // 이름 기준 중복 제거 + needCount로 컷
                 List<TourApiService.TourSpot> dedup = fetched.stream()
                         .filter(s -> usedNames.add(s.name()))
                         .limit(needCount)
                         .toList();
 
-                // 1) Day1에 1개 추가
-                if (!dayList.isEmpty()) {
+                // 1) Day1에 1개 추가 (+ description)
+                if (!dayList.isEmpty() && !dedup.isEmpty()) {
                     CourseDayDTO day1 = dayList.get(0);
-                    if (day1.getPlaces() == null) day1.setPlaces(new java.util.ArrayList<>());
+                    if (day1.getPlaces() == null) day1.setPlaces(new ArrayList<>());
 
-                    if (!dedup.isEmpty()) {
-                        TourApiService.TourSpot addToDay1 = dedup.get(0);
-                        CoursePlaceDTO add = new CoursePlaceDTO();
-                        add.setPlaceName(addToDay1.name());
-                        add.setDescription("관광지");
-                        add.setAddress(addToDay1.address());
-                        day1.getPlaces().add(add);
-                    }
+                    TourApiService.TourSpot addToDay1 = dedup.get(0);
+                    CoursePlaceDTO add = new CoursePlaceDTO();
+                    add.setPlaceName(addToDay1.name());
+                    add.setAddress(addToDay1.address());
+                    // 상세설명
+                    String desc = tourApiService.getPlaceDescription(addToDay1.contentId());
+                    add.setDescription((desc != null && !desc.isBlank()) ? desc : "관광지");
+                    add.setImgUrl(tourApiService.getFirstPlaceImageUrl(addToDay1.contentId()));
+                    day1.getPlaces().add(add);
                 }
 
                 // 2) 남은 것들로 Day2~N 채우기(3개씩)
                 if (totalDays > 1) {
-                    List<TourApiService.TourSpot> rest = dedup.size() > 1 ? dedup.subList(1, dedup.size()) : java.util.Collections.emptyList();
+                    List<TourApiService.TourSpot> rest = dedup.size() > 1 ? dedup.subList(1, dedup.size()) : Collections.emptyList();
                     List<List<TourApiService.TourSpot>> chunks = chunkBy3(rest, totalDays - 1);
 
-                    // Day2..N 생성(필요시 신규 day 추가)
                     int dNum = 2;
                     for (List<TourApiService.TourSpot> chunk : chunks) {
                         CourseDayDTO d = new CourseDayDTO();
                         d.setDay(dNum++);
-                        List<CoursePlaceDTO> ps = new java.util.ArrayList<>();
+                        List<CoursePlaceDTO> ps = new ArrayList<>();
                         for (TourApiService.TourSpot s : chunk) {
                             CoursePlaceDTO p = new CoursePlaceDTO();
                             p.setPlaceName(s.name());
-                            p.setDescription("관광지");
                             p.setAddress(s.address());
+                            String desc = tourApiService.getPlaceDescription(s.contentId());
+                            p.setDescription((desc != null && !desc.isBlank()) ? desc : "관광지");
+                            p.setImgUrl(tourApiService.getFirstPlaceImageUrl(s.contentId()));
                             ps.add(p);
                         }
                         d.setPlaces(ps);
@@ -140,7 +140,16 @@ public class RecommendService {
                 }
             }
 
-            // === 저장 (기존과 동일) ===
+            // countyTitle / label / ReqCreatedAt 기반 씨드
+            long accSeed = Integer.toUnsignedLong(Objects.hash(countyTitle, label, group.getReqCreatedAt(), "ACC"));
+            AccommodationDTO acc = null;
+            if (jeonnam != null) {
+                Integer sigungu = tourApiService.findSigunguCodeByCounty(jeonnam, countyTitle);
+                acc = tourApiService.getOneAccommodationRandomized(jeonnam, sigungu, accSeed, 20);
+            }
+
+
+            // === 저장 ===
             Course course = new Course();
             course.setTitle(countyTitle);
             course.setCourseLabel(label);
@@ -149,7 +158,18 @@ public class RecommendService {
             course.setCreatedAt(LocalDateTime.now().toString());
             course.setRecommendGroup(group);
             course.setTemplate(false);
+
+
+            // 숙소정보 저장
+            if (acc != null) {
+                course.setAccommodationName(acc.getName());
+                course.setAccommodationAddress(acc.getAddress());
+                course.setAccommodationDescription(acc.getDescription());
+            }
+
             courseRepository.save(course);
+
+
 
             for (CourseDayDTO dayDto : dayList) {
                 CourseDay dayEnt = new CourseDay();
@@ -164,7 +184,9 @@ public class RecommendService {
                         place.setOrderNum(order++);
                         place.setPlaceName(placeDto.getPlaceName());
                         place.setPlaceDesc(placeDto.getDescription());
-                        place.setAddress(placeDto.getAddress()); // 엔티티에 address 필드가 있을 경우
+                        // 엔티티에 address 컬럼 존재 시
+                        place.setAddress(placeDto.getAddress());
+                        place.setImgUrl(placeDto.getImgUrl());
                         place.setCourseDay(dayEnt);
                         coursePlaceRepository.save(place);
                     }
@@ -180,28 +202,28 @@ public class RecommendService {
      * Day2~N: TourAPI 같은 시군 3곳씩
      */
     public List<CourseResponseDTO> generateCoursesWithoutSaving(RecommendGroupRequestDTO request) {
-        Map<String, List<CourseDayDTO>> courseMap =
-                aiRequestService.getRecommendedCourseStructure(
-                        "전라남도",
-                        request.getInpStartDate(),
-                        request.getInpEndDate(),
-                        safeInt(request.getInpAdultCnt()),
-                        safeInt(request.getInpChildCnt()),
-                        safeInt(request.getInpBabyCnt()),
-                        request.getInpStyle() != null ? request.getInpStyle().name() : "etc"
-                );
+        Map<String, List<CourseDayDTO>> courseMap = aiRequestService.getRecommendedCourseStructure(
+                "전라남도",
+                request.getInpStartDate(),
+                request.getInpEndDate(),
+                safeInt(request.getInpAdultCnt()),
+                safeInt(request.getInpChildCnt()),
+                safeInt(request.getInpBabyCnt()),
+                request.getInpStyle() != null ? request.getInpStyle().name() : "etc"
+        );
 
         int totalDays = computeTripDays(request.getInpStartDate(), request.getInpEndDate());
         Integer jeonnam = tourApiService.findJeonnamAreaCode();
+
 
         return courseMap.entrySet().stream().map(entry -> {
             String label = entry.getKey();
             List<CourseDayDTO> originalDays = entry.getValue();
 
-            // --- Day1: 엑셀 대표 1곳만 유지 + 주소 보강 ---
+            // Day1: 엑셀 대표 1곳 + 주소 보강
             CourseDayDTO day1 = new CourseDayDTO();
             day1.setDay(1);
-            List<CoursePlaceDTO> day1Places = new java.util.ArrayList<>();
+            List<CoursePlaceDTO> day1Places = new ArrayList<>();
             CoursePlaceDTO excelPlace = null;
             if (!originalDays.isEmpty()
                     && originalDays.get(0).getPlaces() != null
@@ -215,57 +237,54 @@ public class RecommendService {
             String county = aiRequestService.findCountyByPlaceName(excelPlace != null ? excelPlace.getPlaceName() : null);
             if (county == null || county.isBlank()) county = "전라남도";
 
-            List<CourseDayDTO> finalDays = new java.util.ArrayList<>();
+            List<CourseDayDTO> finalDays = new ArrayList<>();
             finalDays.add(day1);
 
-            // --- TourAPI: Day1 보강 1개 + Day2~N 3개씩 ---
+            // TourAPI: Day1 보강 1 + Day2~N 3개/일
             if (jeonnam != null) {
                 Integer sigungu = tourApiService.findSigunguCodeByCounty(jeonnam, county);
 
                 int extraForDay1 = 1;
                 int needCount = (totalDays > 1 ? 3 * (totalDays - 1) : 0) + extraForDay1;
 
-                // 중복 방지(엑셀 대표 장소명)
-                java.util.Set<String> usedNames = new java.util.HashSet<>();
+                Set<String> usedNames = new HashSet<>();
                 if (excelPlace != null) usedNames.add(excelPlace.getPlaceName());
 
-                // 여유분 포함해서 가져오고 이름 기준 dedup 후 needCount로 컷
-                List<TourApiService.TourSpot> fetched =
-                        tourApiService.getTopAttractions(jeonnam, sigungu, needCount * 2);
+                List<TourApiService.TourSpot> fetched = tourApiService.getTopAttractions(jeonnam, sigungu, Math.max(needCount * 2, 6));
                 List<TourApiService.TourSpot> dedup = fetched.stream()
                         .filter(s -> usedNames.add(s.name()))
                         .limit(needCount)
                         .toList();
 
-                // 1) Day1에 1개 추가
+                // Day1에 1개 추가(+overview)
                 if (!dedup.isEmpty()) {
                     TourApiService.TourSpot addToDay1 = dedup.get(0);
                     CoursePlaceDTO p = new CoursePlaceDTO();
                     p.setPlaceName(addToDay1.name());
-                    p.setDescription("관광지");
                     p.setAddress(addToDay1.address());
+                    String desc = tourApiService.getPlaceDescription(addToDay1.contentId());
+                    p.setDescription((desc != null && !desc.isBlank()) ? desc : "관광지");
+                    p.setImgUrl(tourApiService.getFirstPlaceImageUrl(addToDay1.contentId()));
                     day1.getPlaces().add(p);
                 }
 
-                // 2) 남은 것들로 Day2~N 채우기(3개씩)
+                // Day2~N
                 if (totalDays > 1) {
-                    List<TourApiService.TourSpot> rest = dedup.size() > 1
-                            ? dedup.subList(1, dedup.size())
-                            : java.util.Collections.emptyList();
-
+                    List<TourApiService.TourSpot> rest = dedup.size() > 1 ? dedup.subList(1, dedup.size()) : Collections.emptyList();
                     List<List<TourApiService.TourSpot>> chunks = chunkBy3(rest, totalDays - 1);
-
                     int dNum = 2;
                     for (List<TourApiService.TourSpot> chunk : chunks) {
                         CourseDayDTO d = new CourseDayDTO();
                         d.setDay(dNum++);
-                        List<CoursePlaceDTO> ps = new java.util.ArrayList<>();
+                        List<CoursePlaceDTO> ps = new ArrayList<>();
                         for (TourApiService.TourSpot s : chunk) {
-                            CoursePlaceDTO p = new CoursePlaceDTO();
-                            p.setPlaceName(s.name());
-                            p.setDescription("관광지");
-                            p.setAddress(s.address());
-                            ps.add(p);
+                            CoursePlaceDTO cp = new CoursePlaceDTO();
+                            cp.setPlaceName(s.name());
+                            cp.setAddress(s.address());
+                            String desc = tourApiService.getPlaceDescription(s.contentId());
+                            cp.setDescription((desc != null && !desc.isBlank()) ? desc : "관광지");
+                            cp.setImgUrl(tourApiService.getFirstPlaceImageUrl(s.contentId()));
+                            ps.add(cp);
                         }
                         d.setPlaces(ps);
                         finalDays.add(d);
@@ -274,16 +293,25 @@ public class RecommendService {
                 }
             }
 
+            // 숙소 불러오기
+            long accSeed = Integer.toUnsignedLong(Objects.hash(
+                    county, label, request.getInpStartDate(), request.getInpEndDate(), LocalDate.now().toString(), "ACC"
+            ));
+            AccommodationDTO acc = null;
+            if (jeonnam != null) {
+                Integer sigungu = tourApiService.findSigunguCodeByCounty(jeonnam, county);
+                acc = tourApiService.getOneAccommodationRandomized(jeonnam, sigungu, accSeed, 5);
+            }
+
             CourseResponseDTO dto = new CourseResponseDTO();
             dto.setCourseId(null);
             dto.setTitle(county);
             dto.setCourseLabel(label);
             dto.setDays(finalDays);
+            dto.setAccommodation(acc);
             return dto;
         }).toList();
     }
-
-
 
 
     /**
@@ -339,6 +367,7 @@ public class RecommendService {
                             ? place.getAddress()
                             : aiRequestService.findAddressByPlaceName(place.getPlaceName());
                     placeDTO.setAddress(addr);
+                    placeDTO.setImgUrl(place.getImgUrl());
                     return placeDTO;
                 }).toList();
 
@@ -347,6 +376,21 @@ public class RecommendService {
             }).toList();
 
             dto.setDays(dayDTOs);
+
+            //숙소 조회 (엔티티 → DTO)
+            AccommodationDTO accDto = null;
+            if (course.getAccommodationName() != null ||
+                    course.getAccommodationAddress() != null ||
+                    course.getAccommodationDescription() != null) {
+                accDto = new AccommodationDTO();
+                accDto.setName(course.getAccommodationName());
+                accDto.setAddress(course.getAccommodationAddress());
+                accDto.setDescription(
+                        course.getAccommodationDescription() != null ? course.getAccommodationDescription() : ""
+                );
+            }
+            dto.setAccommodation(accDto);
+
             return dto;
         }).toList();
     }
