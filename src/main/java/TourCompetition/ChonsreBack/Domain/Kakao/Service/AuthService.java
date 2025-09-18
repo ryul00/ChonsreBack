@@ -1,5 +1,6 @@
 package TourCompetition.ChonsreBack.Domain.Kakao.Service;
 
+import TourCompetition.ChonsreBack.Domain.Func.Repository.SavedCourseRepository;
 import TourCompetition.ChonsreBack.Domain.Kakao.Entity.KakaoUser;
 import TourCompetition.ChonsreBack.Domain.Kakao.Repository.KakaoUserRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,10 +29,15 @@ public class AuthService {
     private String redirectUri;
 
     private final KakaoUserRepository kakaoUserRepository;
+    private final SavedCourseRepository savedCourseRepository;
     // 생성자 주입을 사용하여 의존성 주입
-    public AuthService(KakaoUserRepository kakaoUserRepository) {
+    public AuthService(KakaoUserRepository kakaoUserRepository,
+                       SavedCourseRepository savedCourseRepository) {
+        this.savedCourseRepository = savedCourseRepository;
         this.kakaoUserRepository = kakaoUserRepository;
     }
+
+
 
     RestTemplate restTemplate = new RestTemplate();
     // 코드 발급
@@ -100,16 +106,42 @@ public class AuthService {
         }
     }
 
-
+    // 닉네임 설정
+// AuthService.java
     @Transactional
     public void setNicknameForKakaoUser(Long kakaoId, String nickname) {
+        // 1) 닉네임 공백 체크
+        if (nickname == null || nickname.trim().isEmpty()) {
+            throw new RuntimeException("닉네임은 비워둘 수 없습니다.");
+        }
+
+        // 2) 중복 닉네임 체크 (자기 자신 제외)
+        boolean exists = kakaoUserRepository.existsByNicknameAndKakaoIdNot(nickname, kakaoId);
+        if (exists) {
+            throw new RuntimeException("이미 사용 중인 닉네임입니다.");
+        }
+
+        // 3) 사용자 조회
         KakaoUser kakaoUser = kakaoUserRepository.findByKakaoId(kakaoId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다. kakaoId: " + kakaoId));
 
+        // 4) 닉네임 변경
         kakaoUser.setNickname(nickname);
-        kakaoUserRepository.save(kakaoUser); // 생략 가능하지만 명시적 저장
-        log.info("닉네임 설정 완료: kakaoId={}, nickname={}", kakaoId, nickname);
+        kakaoUserRepository.save(kakaoUser);
+
+        log.info("닉네임 변경 완료: kakaoId={}, nickname={}", kakaoId, nickname);
     }
+
+    @Transactional
+    public void setProfileImgForKakaoUser(Long kakaoId, String profileImgUrl) {
+        KakaoUser kakaoUser = kakaoUserRepository.findByKakaoId(kakaoId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다. kakaoId: " + kakaoId));
+
+        kakaoUser.setProfileImgUrl(profileImgUrl);
+        kakaoUserRepository.save(kakaoUser);
+        log.info("프로필 이미지 변경 완료: kakaoId={}, profileImgUrl={}", kakaoId, profileImgUrl);
+    }
+
 
 
     // 로그아웃
@@ -149,16 +181,21 @@ public class AuthService {
                 JsonNode.class
         );
 
-        // 응답에서 사용자 ID 추출
         Long kakaoId = responseNode.getBody().get("id").asLong();
 
-        // 데이터베이스에서 사용자 삭제
-        kakaoUserRepository.deleteByKakaoId(kakaoId);
+        // 1. 유저 조회
+        KakaoUser kakaoUser = kakaoUserRepository.findByKakaoId(kakaoId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다. kakaoId=" + kakaoId));
+
+        // 2. 먼저 SavedCourse 삭제
+        savedCourseRepository.deleteByKakaoUser(kakaoUser);
+
+        // 3. 그 다음 KakaoUser 삭제
+        kakaoUserRepository.delete(kakaoUser);
 
         log.info("탈퇴 응답: {}", responseNode.getBody().toPrettyString());
 
-        // 반환할 때 메시지를 포함한 전체 JSON을 반환하도록 조정
-        return responseNode.getBody().toString(); // JSON 문자열 반환
+        return responseNode.getBody().toString();
     }
 
     @Transactional

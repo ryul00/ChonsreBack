@@ -9,5 +9,5 @@ import java.util.List;
 
 @Repository
 public interface CourseDayRepository extends JpaRepository<CourseDay, Long> {
-    List<CourseDay> findByCourse(Course course);
+    List<CourseDay> findByCourseOrderByDayNumAsc(Course course);
 }

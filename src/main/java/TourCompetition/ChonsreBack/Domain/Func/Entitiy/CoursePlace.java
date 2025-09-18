@@ -16,7 +16,7 @@ public class CoursePlace {
     private  Integer orderNum; // 일정 장소 순서
     private String placeName;
     private String placeDesc; // 장소별 설명
-    private String ImgUrl; // 장소 이미지
+    private String imgUrl; // 장소 이미지
 
     @Column(length = 255, nullable = true)  // 주소 컬럼 추가 (nullable)
     private String address;

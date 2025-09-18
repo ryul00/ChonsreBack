@@ -29,5 +29,7 @@ public interface SavedCourseRepository extends JpaRepository<SavedCourse, Long> 
 
     // 코스 삭제시 연쇄 정리(선택)
     long deleteByCourse(Course course);
+
+    long deleteByKakaoUser(KakaoUser user);
 }
 

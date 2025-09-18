@@ -14,4 +14,6 @@ public class CourseEditRequestDTO {
     private String title;
     @NotNull
     private List<CourseEditDayDTO> days;
+
+    private AccommodationEditDTO accommodation;
 }

@@ -47,6 +47,7 @@ public class AuthController {
         }
     }
 
+    // 닉네임 변경 (기존)
     @PostMapping("/SetNickname")
     public ResponseEntity<?> setNickname(@RequestHeader("Authorization") String token,
                                          @RequestBody Map<String, String> requestBody) {
@@ -58,7 +59,7 @@ public class AuthController {
             authService.setNicknameForKakaoUser(kakaoId, nickname);
 
             Map<String, Object> response = new HashMap<>();
-            response.put("message", "닉네임이 성공적으로 설정되었습니다.");
+            response.put("message", "닉네임이 설정(신규/변경) 완료.");
             response.put("nickname", nickname);
 
             return ResponseEntity.ok(response);
@@ -68,23 +69,54 @@ public class AuthController {
         }
     }
 
-    @GetMapping("/logout")
-    public void kakaoLogout(@RequestParam("token") String token) {
-        authService.kakaoLogout(token);
+    // [NEW] 프로필 이미지 변경
+    @PostMapping("/SetProfileImg")
+    public ResponseEntity<?> setProfileImg(@RequestHeader("Authorization") String token,
+                                           @RequestBody Map<String, String> requestBody) {
+        try {
+            String accessToken = token.replace("Bearer ", "");
+            Long kakaoId = authService.kakaoGetUserIdFromTokenInfo(accessToken);
+            String profileImgUrl = requestBody.get("profileImgUrl");
+
+            authService.setProfileImgForKakaoUser(kakaoId, profileImgUrl);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "프로필 이미지가 설정(신규/변경) 완료.");
+            response.put("profileImgUrl", profileImgUrl);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("프로필 이미지 변경 실패", e);
+            return ResponseEntity.status(400).body("프로필 이미지 설정 중 오류가 발생했습니다.");
+        }
     }
+
+
+    @GetMapping("/logout")
+    public ResponseEntity<String> kakaoLogout(
+            @RequestHeader("Authorization") String authorizationHeader
+    ) {
+        // "Bearer ..." 형태에서 실제 토큰만 추출
+        String token = authorizationHeader.replace("Bearer ", "").trim();
+
+        String result = authService.kakaoLogout(token);
+
+        log.info("카카오 로그아웃 완료: {}", result);
+
+        return ResponseEntity.ok("카카오 로그아웃 성공");
+    }
+
+
 
 
     // 카카오 회원 탈퇴
     @GetMapping("/unlink")
     public ResponseEntity<Map<String, Object>> kakaoUnlink(@RequestHeader("Authorization") String token) {
         try {
-            // 1. 헤더로부터 Bearer 토큰을 추출 (앞의 "Bearer " 부분 제거)
             String accessToken = token.replace("Bearer ", "");
-
-            // 2. 액세스 토큰을 사용해 카카오 계정 연결 해제 요청
+            // ✅ 컨트롤러에서는 서비스 호출만
             String response = authService.kakaoUnlink(accessToken);
 
-            // 3. JSON 응답 생성
             Map<String, Object> responseBody = new HashMap<>();
             responseBody.put("status", "success");
             responseBody.put("message", "회원 탈퇴가 성공적으로 처리되었습니다.");
@@ -94,7 +126,6 @@ public class AuthController {
         } catch (Exception e) {
             log.error("탈퇴 실패: ", e);
 
-            // 4. 실패 시 JSON 형태의 에러 응답 반환
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("status", "error");
             errorResponse.put("message", "회원 탈퇴 중 오류가 발생했습니다.");

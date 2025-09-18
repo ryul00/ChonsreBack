@@ -47,6 +47,9 @@ public class Course {
     @Column(name = "acc_address", length = 300)
     private String accommodationAddress;
 
+    @Column(name = "acc_imgUrl", length = 300)
+    private String accommodationImgUrl;
+
     @Lob // 길어질 수 있으니 가급적 TEXT
     @Column(name = "acc_description")
     private String accommodationDescription;

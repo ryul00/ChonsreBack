@@ -1,6 +1,7 @@
 package TourCompetition.ChonsreBack.Domain.Func.Service;
 
 import TourCompetition.ChonsreBack.Domain.Func.DTO.AiCourse.AccommodationDTO;
+import TourCompetition.ChonsreBack.Domain.Func.DTO.AiCourse.CoursePlaceDTO;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -15,8 +16,11 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
-
 import static org.apache.poi.util.LocaleID.OM;
+
+
+import java.nio.charset.StandardCharsets;
+import java.net.URLEncoder;
 
 @Slf4j
 @Service
@@ -212,19 +216,18 @@ public class TourApiService {
             JsonNode items = root.path("response").path("body").path("items").path("item");
             if (items.isArray() && items.size() > 0) {
                 JsonNode it = items.get(0);
-                String origin = it.path("originimgurl").asText("");
-                String small  = it.path("smallimageurl").asText("");
-                if (!origin.isBlank()) return origin;
-                if (!small.isBlank())  return small;
+                String origin = toHttpsOrNull(it.path("originimgurl").asText("")); // [CHANGED]
+                String small  = toHttpsOrNull(it.path("smallimageurl").asText("")); // [CHANGED]
+                if (origin != null) return origin;
+                if (small  != null) return small;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("[detailImage2] error: {}", e.toString(), e);
         }
         return null;
     }
 
     // 숙소 랜덤 선택
-// TourApiService.java (추가/교체)
 
     private static class StayPage {
         final int totalCount;
@@ -304,7 +307,7 @@ public class TourApiService {
 
         // 3) 페이지 다양화 (총건수 기반)
         if (page.items.isEmpty() && page.totalCount > 0) {
-            int maxPage = Math.max(1, Math.min(5, ceilDiv(page.totalCount, rows))); // 과호출 방지
+            int maxPage = Math.max(1, Math.min(5, ceilDiv(page.totalCount, rows)));
             int pagePick = Math.floorMod((int) seed, maxPage) + 1;
             log.info("[ACC-RAND-STAY] try other page={}/{}", pagePick, maxPage);
             page = fetchStayPage(areaCode, sigunguCode, rows, pagePick);
@@ -318,7 +321,6 @@ public class TourApiService {
             return null;
         }
 
-        // 4) 셔플 후 첫 번째 선택 (편향 제거)
         java.util.Random rnd = new java.util.Random(seed ^ 0x9E3779B97F4A7C15L);
         java.util.Collections.shuffle(page.items, rnd);
         JsonNode it = page.items.get(0);
@@ -331,10 +333,16 @@ public class TourApiService {
 
         String overview = getPlaceDescription(contentId); // detailCommon2 재사용
 
+        // [CHANGED] 이미지 https 정규화
+        String img = toHttpsOrNull(it.path("firstimage").asText(""));
+        if (img == null) img = toHttpsOrNull(it.path("firstimage2").asText(""));
+        if (img == null && contentId != 0) img = toHttpsOrNull(getFirstImageByContentId(contentId, 32));
+
         AccommodationDTO dto = new AccommodationDTO();
         dto.setName(title);
         dto.setAddress(address);
         dto.setDescription(overview != null ? overview : "");
+        dto.setImgUrl(img);
         log.info("[ACC-RAND-STAY] pick contentId={} title='{}'", contentId, title);
         return dto;
     }
@@ -356,12 +364,234 @@ public class TourApiService {
 
         String overview = getPlaceDescription(contentId);
 
+        String img = toHttpsOrNull(it.path("firstimage").asText(""));
+        if (img == null) img = toHttpsOrNull(it.path("firstimage2").asText(""));
+        if (img == null && contentId != 0) img = toHttpsOrNull(getFirstImageByContentId(contentId, 32));
+
         AccommodationDTO dto = new AccommodationDTO();
         dto.setName(title);
         dto.setAddress(address);
         dto.setDescription(overview != null ? overview : "");
+        dto.setImgUrl(img); // [CHANGED]
         return dto;
     }
+
+    // contentId로 detailImage2 조회해서 대표 이미지 1장 뽑기 (숙소/관광지 공용)
+    public String getFirstImageByContentId(Long contentId, Integer contentTypeId) {
+        if (contentId == null) return null;
+
+        String url = baseUrl + "/detailImage2"
+                + "?serviceKey=" + serviceKeyEnc
+                + "&MobileOS=ETC&MobileApp=AppTest&_type=json"
+                + "&contentId=" + contentId
+                + (contentTypeId != null ? "&contentTypeId=" + contentTypeId : "")
+                + "&imageYN=Y"
+                + "&numOfRows=1&pageNo=1";
+
+        try {
+            JsonNode root = wc().get().uri(URI.create(url))
+                    .retrieve().bodyToMono(JsonNode.class).block();
+
+            JsonNode items = root.path("response").path("body").path("items").path("item");
+            JsonNode first = null;
+            if (items != null && items.isArray() && items.size() > 0) first = items.get(0);
+            else if (items != null && items.isObject()) first = items;
+
+            if (first != null) {
+                String origin = toHttpsOrNull(first.path("originimgurl").asText("")); // [CHANGED]
+                String small  = toHttpsOrNull(first.path("smallimageurl").asText("")); // [CHANGED]
+                if (origin != null) return origin;
+                if (small  != null)  return small;
+            }
+        } catch (Exception e) {
+            log.error("[detailImage2] error: {}", e.toString(), e);
+        }
+        return null;
+    }
+
+
+    // 전남 한정 + 시군구 한정으로 관광지 이름 검색
+    public List<CoursePlaceDTO> searchAttractionsInJeonnam(String keyword, String countyName, int limit) {
+        if (keyword == null || keyword.isBlank()) return List.of();
+
+        Integer jeonnam = findJeonnamAreaCode();
+        if (jeonnam == null) return List.of();
+
+        Integer sigungu = null;
+        if (countyName != null && !countyName.isBlank()) {
+            sigungu = findSigunguCodeByCounty(jeonnam, countyName);
+        }
+        return searchAttractionsByName(jeonnam, sigungu, keyword, Math.max(limit, 1));
+    }
+
+    // [ADDED] 내부 구현: KorService2/searchKeyword2 사용 (contentTypeId=12: 관광지)
+// TourApiService.java
+// 1) searchAttractionsByName 에서 listYN 제거 + 디버그 로그 + 폴백
+
+    private List<CoursePlaceDTO> searchAttractionsByName(
+            int areaCode, Integer sigunguCode, String keyword, int limit) {
+        try {
+            String encoded = URLEncoder.encode(keyword.trim(), StandardCharsets.UTF_8);
+            String url = baseUrl + "/searchKeyword2"
+                    + "?serviceKey=" + serviceKeyEnc
+                    + "&MobileOS=ETC&MobileApp=AppTest&_type=json"
+                    + "&contentTypeId=12"
+                    + "&arrange=P"
+                    + "&pageNo=1&numOfRows=" + Math.max(limit, 10)
+                    + "&areaCode=" + areaCode
+                    + (sigunguCode != null ? "&sigunguCode=" + sigunguCode : "")
+                    + "&keyword=" + encoded;
+
+            log.info("[KW-SEARCH] url={}", url);
+            JsonNode root = wc().get().uri(URI.create(url))
+                    .retrieve().bodyToMono(JsonNode.class).block();
+
+            String resultCode = root.path("response").path("header").path("resultCode").asText("MISSING");
+            String resultMsg  = root.path("response").path("header").path("resultMsg").asText("MISSING");
+            int totalCount    = root.path("response").path("body").path("totalCount").asInt(-1);
+            log.info("[KW-SEARCH] resultCode={} resultMsg={} totalCount={}", resultCode, resultMsg, totalCount);
+
+            if (!"0000".equals(resultCode)) {
+                log.warn("[KW-SEARCH] non-OK result -> fallback(area only)");
+                if (sigunguCode != null) {
+                    return searchAttractionsByName(areaCode, null, keyword, limit);
+                }
+                return fallbackFilterByTitle(areaCode, keyword, limit);
+            }
+
+            JsonNode items = root.path("response").path("body").path("items").path("item");
+            List<JsonNode> rows = new ArrayList<>();
+            if (items != null && !items.isNull()) {
+                if (items.isArray()) items.forEach(rows::add);
+                else if (items.isObject()) rows.add(items);
+            }
+
+            List<CoursePlaceDTO> out = new ArrayList<>();
+            for (JsonNode it : rows) {
+                long contentId = it.path("contentid").asLong(0);
+                String title   = it.path("title").asText("");
+                if (title.isBlank()) continue;
+
+                String addr1 = it.path("addr1").asText("");
+                String addr2 = it.path("addr2").asText("");
+                String address = addr1 + (addr2.isBlank() ? "" : (" " + addr2));
+
+                // [CHANGED] 이미지 https 정규화
+                String img = toHttpsOrNull(it.path("firstimage").asText(""));
+                if (img == null) img = toHttpsOrNull(it.path("firstimage2").asText(""));
+                if (img == null && contentId != 0) img = toHttpsOrNull(getFirstPlaceImageUrl(contentId));
+
+                String desc = (contentId != 0) ? getPlaceDescription(contentId) : "";
+                if (desc == null || desc.isBlank()) desc = "관광지";
+
+                CoursePlaceDTO dto = new CoursePlaceDTO();
+                dto.setPlaceName(title);
+                dto.setDescription(desc);
+                dto.setAddress(address);
+                dto.setImgUrl(img);
+                out.add(dto);
+                if (out.size() >= limit) break;
+            }
+
+            if (out.isEmpty() && sigunguCode != null) {
+                log.warn("[KW-SEARCH] empty at sigungu -> retry area only");
+                return searchAttractionsByName(areaCode, null, keyword, limit);
+            }
+
+            if (out.isEmpty()) {
+                log.warn("[KW-SEARCH] still empty -> fallbackFilterByTitle");
+                return fallbackFilterByTitle(areaCode, keyword, limit);
+            }
+            return out;
+        } catch (Exception e) {
+            log.error("[KW-SEARCH] exception: {}", e.getMessage(), e);
+            return fallbackFilterByTitle(areaCode, keyword, limit);
+        }
+    }
+
+
+    // 2) 폴백: areaBasedList2 결과 중 title 키워드 포함 필터
+    private List<CoursePlaceDTO> fallbackFilterByTitle(int areaCode, String keyword, int limit) {
+        try {
+            String url = baseUrl + "/areaBasedList2"
+                    + "?serviceKey=" + serviceKeyEnc
+                    + "&MobileOS=ETC&MobileApp=AppTest&_type=json"
+                    + "&contentTypeId=12&arrange=P&pageNo=1&numOfRows=100"
+                    + "&areaCode=" + areaCode;
+
+            log.info("[KW-FALLBACK] url={}", url);
+            JsonNode root = wc().get().uri(URI.create(url))
+                    .retrieve().bodyToMono(JsonNode.class).block();
+
+            JsonNode items = root.path("response").path("body").path("items").path("item");
+            if (items == null || items.isNull()) return List.of();
+
+            List<JsonNode> rows = new ArrayList<>();
+            if (items.isArray()) items.forEach(rows::add);
+            else if (items.isObject()) rows.add(items);
+
+            String key = keyword.trim();
+            List<CoursePlaceDTO> out = new ArrayList<>();
+            for (JsonNode it : rows) {
+                String title = it.path("title").asText("");
+                if (title.isBlank() || !title.contains(key)) continue;
+
+                long contentId = it.path("contentid").asLong(0);
+                String addr1 = it.path("addr1").asText("");
+                String addr2 = it.path("addr2").asText("");
+                String address = addr1 + (addr2.isBlank() ? "" : (" " + addr2));
+
+                String img = toHttpsOrNull(it.path("firstimage").asText(""));     // [CHANGED]
+                if (img == null) img = toHttpsOrNull(it.path("firstimage2").asText("")); // [CHANGED]
+                if (img == null && contentId != 0) img = toHttpsOrNull(getFirstPlaceImageUrl(contentId)); // [CHANGED]
+
+                String desc = (contentId != 0) ? getPlaceDescription(contentId) : "";
+                if (desc == null || desc.isBlank()) desc = "관광지";
+
+                CoursePlaceDTO dto = new CoursePlaceDTO();
+                dto.setPlaceName(title);
+                dto.setDescription(desc);
+                dto.setAddress(address);
+                dto.setImgUrl(img);
+                out.add(dto);
+                if (out.size() >= limit) break;
+            }
+            log.info("[KW-FALLBACK] matched={}", out.size());
+            return out;
+        } catch (Exception e) {
+            log.error("[KW-FALLBACK] exception: {}", e.getMessage(), e);
+            return List.of();
+        }
+    }
+
+
+//   http/HTTPS/스킴없음(//host/path, host/path) 모두 https URL로 정규화
+    private String toHttpsOrNull(String url) {
+        if (url == null) return null;
+        String u = url.trim();
+        if (u.isEmpty()) return null;
+
+        // 스킴 없는 // 형태
+        if (u.startsWith("//")) return "https:" + u;
+
+        // 대소문자 무시 http:// → https://
+        if (u.regionMatches(true, 0, "http://", 0, 7)) {
+            return "https://" + u.substring(7);
+        }
+        // 이미 https:// 이면 그대로
+        if (u.regionMatches(true, 0, "https://", 0, 8)) {
+            return u;
+        }
+        // 스킴이 전혀 없으면 https 가정
+        if (!u.contains("://")) {
+            return "https://" + u;
+        }
+        return u; // 그 외는 그대로 반환
+    }
+
+
+
+
 
 
 

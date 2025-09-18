@@ -352,12 +352,12 @@ public class RecommendService {
             dto.setTitle(course.getTitle());
             dto.setCourseLabel(course.getCourseLabel());
 
-            List<CourseDay> courseDays = courseDayRepository.findByCourse(course);
+            List<CourseDay> courseDays = courseDayRepository.findByCourseOrderByDayNumAsc(course);
             List<CourseDayDTO> dayDTOs = courseDays.stream().map(day -> {
                 CourseDayDTO dayDTO = new CourseDayDTO();
                 dayDTO.setDay(day.getDayNum());
 
-                List<CoursePlace> places = coursePlaceRepository.findByCourseDay(day);
+                List<CoursePlace> places = coursePlaceRepository.findByCourseDayOrderByOrderNumAsc(day);
                 List<CoursePlaceDTO> placeDTOs = places.stream().map(place -> {
                     CoursePlaceDTO placeDTO = new CoursePlaceDTO();
                     placeDTO.setPlaceName(place.getPlaceName());

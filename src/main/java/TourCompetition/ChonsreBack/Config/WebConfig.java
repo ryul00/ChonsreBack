@@ -12,7 +12,8 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addMapping("/**") // 모든 엔드포인트에 대해 CORS 설정
                 .allowedOrigins(
                         "http://localhost:5173",
-                        "https://chonsre.vercel.app"
+                        "https://chonsre.vercel.app",
+                        "https://www.chonsre.org"
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // 허용할 HTTP 메서드
                 .allowedHeaders("*") // 허용할 헤더
