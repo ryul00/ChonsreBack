@@ -46,7 +46,6 @@ dataset:
     address: "주소"        # 전체 주소
     desc: "체험"           # 체험 프로그램
 
-  # 👇 여기가 columns와 같은 'dataset' 하위 레벨이어야 합니다 (columns 안 X)
   jeonnam-json:
     path: classpath:datasets/JeonNam.xlsx   # 실제 리소스 위치 (대소문자 주의)
     sheet-index: 0                          # 기본 시트
