@@ -32,8 +32,8 @@ openai:
 
 tourapi:
   base-url: "https://apis.data.go.kr/B551011/KorService2"
-  key-enc: 6XGuvzEbcmoMaEf15e1pQbCb7BPtY7Mp6Om0bikt%2Brxk70Bs9h9%2BFTXf%2FgSXKIEd%2FC5HpnVR4rxM225ucrrRpQ%3D%3D
-  key-dec: 6XGuvzEbcmoMaEf15e1pQbCb7BPtY7Mp6Om0bikt+rxk70Bs9h9+FTXf/gSXKIEd/C5HpnVR4rxM225ucrrRpQ==
+  key-enc: ${TOUR_API_KEY_ENC}
+  key-dec: ${TOUR_API_KEY_DEC}
 
 dataset:
   jeonnam:
