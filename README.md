@@ -82,11 +82,10 @@
 | Role            | Name    | Responsibilities |
 |----------------|--------|-----------------|
 | Backend        | 유광렬  | JWT 기반 회원가입/로그인, 일정/일반 게시판, 마이페이지 CRUD 기능 구현, 서버 배포 |
-| Backend        | 박정욱  | 아이디어 제시, 회원가입/로그인, 일반 게시판, 마이페이지 CRUD 기능 구현 |
 | Frontend       | 장준익  | 메인페이지 구현, 일정게시판 구현, 마이페이지 구현, GPT API 구현, 일정 게시판 서버 연결 |
 | Frontend       | 심희영  | 메인페이지 구현, 일반게시판 구현, 로그인/회원가입/로그아웃, 일반게시판 서버 연결 |
 | Product Design | 이유나  | 메인페이지/일정게시판/마이페이지 디자인, 디자인 시스템/컴포넌트 제작 |
-| Product Design | 김유나  | 로그인, 회원가입, 일반게시판, 일반 게시물 작성페이지 디자인 |
+| Product Design | 윤혜원원  | 로그인, 회원가입, 일반게시판, 일반 게시물 작성페이지 디자인 |
 
 
 
@@ -106,7 +105,7 @@
 
 ## 📜 API 명세서
 
-🔗 [Postman API 명세서 바로가기](https://documenter.getpostman.com/view/28467558/2sAXjGcZqr)
+🔗 [Chonsre API 명세서 바로가기](https://identity.getpostman.com/handover/multifactor?user=28467558&handover_token=47292b58-6d2e-404b-b547-9089a0de3137)
 
 ---
 
