@@ -79,15 +79,13 @@
 
 ## 🏆 역할
 
-| Role            |  Name    | Responsibilities |
-|-----------------|--------- |-----------------|
-| Backend         | 유광렬   | 시용자 관리(OAuth 2.0), BE API 개발 전반(관광데이터, Gpt API), HTTPS 서버 구축 & CICD(AWS), API 명세(PostMan) 등 |
-| Frontend        | 장준익   | 메인화면 , AI 촌캉스 코스 추천 및 저장 화면 등 FE 구현(관광데이터, KakaoMap), FE 빌드 파일 배포(Vercel) |
-| Frontend        | 심희영   | 마이페이지 , 촌캉스 템플릿 코스 관리 등 FE 구현(관광데이터, Gpt API) |
-| Product Design  | 이유나   | 메인화면 , AI 촌캉스 코스 추천 및 저장 화면 디자인, 디자인 시스템/컴포넌트 제작, 발표 자료 제작(Figma) |
-| Product Design  | 윤혜원   | 마이페이지 , 템플릿 촌캉스 코스 관리 디자인, 디자인 시스템/컴포넌트 제작, 발표 자료 제작(Figma) |
-
-
+| Role           | Name | Responsibilities                                                                            |
+| -------------- | ---- | ------------------------------------------------------------------------------------------- |
+| Backend        | 유광렬  | 시용자 관리(OAuth 2.0), BE API 개발 전반(관광데이터, Gpt API), HTTPS 서버 구축 & CICD(AWS), API 명세(PostMan) 등 |
+| Frontend       | 장준익  | 메인화면, AI 촌캉스 코스 추천 및 저장 화면 등 FE 구현(관광데이터, KakaoMap), FE 빌드 파일 배포(Vercel)                    |
+| Frontend       | 심희영  | 마이페이지, 촌캉스 템플릿 코스 관리 등 FE 구현(관광데이터, Gpt API)                                                |
+| Product Design | 이유나  | 메인화면, AI 촌캉스 코스 추천 및 저장 화면 디자인, 디자인 시스템/컴포넌트 제작, 발표 자료 제작(Figma)                            |
+| Product Design | 윤혜원  | 마이페이지, 템플릿 촌캉스 코스 관리 디자인, 디자인 시스템/컴포넌트 제작, 발표 자료 제작(Figma)                                  |
 
 ---
 
