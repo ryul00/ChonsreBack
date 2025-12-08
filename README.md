@@ -228,7 +228,7 @@
   <tr>
     <td align="center" style="border: 1px solid #ddd;">
       <a href="https://www.youtube.com/watch?v=jFaDGj07epY">
-        <img src="https://github.com/user-attachments/assets/e52cb91b-8d69-4f9c-a239-d2d8942abbda" width="700px">
+        <img src="https://github.com/user-attachments/assets/6e89e72f-3cd9-42e4-bf12-9e750435ffcb" width="700px">
       </a>
     </td>
   </tr>
