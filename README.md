@@ -145,7 +145,7 @@
   </tr>
   <tr>
     <td align="center" style="border: 1px solid #ddd;">
-      <img src="gif/login.gif" width="300px">
+      <img src="https://github.com/user-attachments/assets/bdf276a3-c6dc-429c-ad0a-c5b6a33e4463" width="400px">
     </td>
   </tr>
 </table>
