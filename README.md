@@ -140,25 +140,12 @@
 <table align="center" border="1" cellpadding="10" cellspacing="0" style="border-collapse: collapse; border: 1px solid #ddd;">
   <tr>
     <td align="center" style="border: 1px solid #ddd;">
-      <strong>메인 페이지</strong>
+      <strong>로그인 & 메인화면</strong>
     </td>
   </tr>
   <tr>
     <td align="center" style="border: 1px solid #ddd;">
-      <img src="https://github.com/user-attachments/assets/abd91ae2-d3ab-45ee-ab90-93a9a8767921" width="700px">
-    </td>
-  </tr>
-</table>
-
-<table align="center" border="1" cellpadding="10" cellspacing="0" style="border-collapse: collapse; border: 1px solid #ddd;">
-  <tr>
-    <td align="center" style="border: 1px solid #ddd;">
-      <strong>일반 게시판</strong>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" style="border: 1px solid #ddd;">
-     <img src="https://github.com/user-attachments/assets/8f7c8f89-4513-4fd4-befe-96267b280126" alt="이미지" width="700px">
+      <img src="gif/login.gif" width="300px">
     </td>
   </tr>
 </table>
@@ -166,24 +153,122 @@
 <table align="center" border="1" cellpadding="10" cellspacing="0" style="border-collapse: collapse; border: 1px solid #ddd;">
   <tr>
     <td align="center" style="border: 1px solid #ddd;">
-      <strong>일정 게시글 작성 페이지 </strong>
+      <strong>서재 조회</strong>
     </td>
   </tr>
   <tr>
     <td align="center" style="border: 1px solid #ddd;">
-      <img src="https://github.com/user-attachments/assets/c446aa81-ef8d-419a-81ce-bf31411b5ea3" width="700px">
+     <img src="gif/getBook.gif" alt="이미지" width="300px">
+    </td>
+  </tr>
+</table>
+
+<table align="center" border="1" cellpadding="10" cellspacing="0" style="border-collapse: collapse; border: 1px solid #ddd;">
+  <tr>
+    <td align="center" style="border: 1px solid #ddd;">
+      <strong>AI 책 추천</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" style="border: 1px solid #ddd;">
+      <img src="gif/ai-recommend.gif" width="300px">
     </td>
   </tr>
 </table>
 <table align="center" border="1" cellpadding="10" cellspacing="0" style="border-collapse: collapse; border: 1px solid #ddd;">
   <tr>
     <td align="center" style="border: 1px solid #ddd;">
-      <strong> OpenAI(ChatGptApi) 기능</strong>
+      <strong>독서대 타이머</strong>
     </td>
   </tr>
   <tr>
     <td align="center" style="border: 1px solid #ddd;">
-      <img src="https://github.com/user-attachments/assets/1cc32a2f-0e68-4d46-b42a-a387db5def92" width="600px">
+      <img src="gif/timer.gif" width="300px">
+    </td>
+  </tr>
+</table>
+<table align="center" border="1" cellpadding="10" cellspacing="0" style="border-collapse: collapse; border: 1px solid #ddd;">
+  <tr>
+    <td align="center" style="border: 1px solid #ddd;">
+      <strong>책갈피 추가 및 조회</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" style="border: 1px solid #ddd;">
+      <img src="gif/bookMarkAdd.gif" width="300px">
+    </td>
+  </tr>
+</table>
+
+<table align="center" border="1" cellpadding="10" cellspacing="0" style="border-collapse: collapse; border: 1px solid #ddd;">
+  <tr>
+    <td align="center" style="border: 1px solid #ddd;">
+      <strong>독서대 백색소음</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" style="border: 1px solid #ddd;">
+      <img src="gif/asmr.gif" width="300px">
+    </td>
+  </tr>
+</table>
+<table align="center" border="1" cellpadding="10" cellspacing="0" style="border-collapse: collapse; border: 1px solid #ddd;">
+  <tr>
+    <td align="center" style="border: 1px solid #ddd;">
+      <strong>또 읽을 책 추가</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" style="border: 1px solid #ddd;">
+      <img src="gif/star.gif" width="300px">
+    </td>
+  </tr>
+</table>
+<table align="center" border="1" cellpadding="10" cellspacing="0" style="border-collapse: collapse; border: 1px solid #ddd;">
+  <tr>
+    <td align="center" style="border: 1px solid #ddd;">
+      <strong>반추하기</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" style="border: 1px solid #ddd;">
+      <img src="gif/review.gif" width="300px">
+    </td>
+  </tr>
+</table>
+<table align="center" border="1" cellpadding="10" cellspacing="0" style="border-collapse: collapse; border: 1px solid #ddd;">
+  <tr>
+    <td align="center" style="border: 1px solid #ddd;">
+      <strong>가장 가까운 도서관 안내</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" style="border: 1px solid #ddd;">
+      <img src="gif/nearLibrary.gif" width="300px">
+    </td>
+  </tr>
+</table>
+<table align="center" border="1" cellpadding="10" cellspacing="0" style="border-collapse: collapse; border: 1px solid #ddd;">
+  <tr>
+    <td align="center" style="border: 1px solid #ddd;">
+      <strong>근처 도서관 조회</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" style="border: 1px solid #ddd;">
+      <img src="gif/library.gif" width="300px">
+    </td>
+  </tr>
+</table>
+<table align="center" border="1" cellpadding="10" cellspacing="0" style="border-collapse: collapse; border: 1px solid #ddd;">
+  <tr>
+    <td align="center" style="border: 1px solid #ddd;">
+      <strong>로그아웃 및 회원탈퇴</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" style="border: 1px solid #ddd;">
+      <img src="gif/logout.gif" width="300px">
     </td>
   </tr>
 </table>
