@@ -153,12 +153,12 @@
 <table align="center" border="1" cellpadding="10" cellspacing="0" style="border-collapse: collapse; border: 1px solid #ddd;">
   <tr>
     <td align="center" style="border: 1px solid #ddd;">
-      <strong>서재 조회</strong>
+      <strong>AI 코스 생성</strong>
     </td>
   </tr>
   <tr>
     <td align="center" style="border: 1px solid #ddd;">
-     <img src="gif/getBook.gif" alt="이미지" width="300px">
+     <img src="https://github.com/user-attachments/assets/78bb9a59-3187-45f6-9088-80c6537116e8" alt="이미지" width="500px">
     </td>
   </tr>
 </table>
