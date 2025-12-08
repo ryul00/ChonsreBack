@@ -145,7 +145,20 @@
   </tr>
   <tr>
     <td align="center" style="border: 1px solid #ddd;">
-      <img src="https://github.com/user-attachments/assets/bdf276a3-c6dc-429c-ad0a-c5b6a33e4463" width="400px">
+      <img src="https://github.com/user-attachments/assets/bdf276a3-c6dc-429c-ad0a-c5b6a33e4463" width="500px">
+    </td>
+  </tr>
+</table>
+
+<table align="center" border="1" cellpadding="10" cellspacing="0" style="border-collapse: collapse; border: 1px solid #ddd;">
+  <tr>
+    <td align="center" style="border: 1px solid #ddd;">
+      <strong>코스 상세조회</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" style="border: 1px solid #ddd;">
+      <img src="https://github.com/user-attachments/assets/4dc79d23-5cdd-4523-bc5a-c67cf4b66e5f" width="500px">
     </td>
   </tr>
 </table>
@@ -166,24 +179,12 @@
 <table align="center" border="1" cellpadding="10" cellspacing="0" style="border-collapse: collapse; border: 1px solid #ddd;">
   <tr>
     <td align="center" style="border: 1px solid #ddd;">
-      <strong>코스 상세조회</strong>
+      <strong>코스 수정 및 저장</strong>
     </td>
   </tr>
   <tr>
     <td align="center" style="border: 1px solid #ddd;">
-      <img src="https://github.com/user-attachments/assets/4dc79d23-5cdd-4523-bc5a-c67cf4b66e5f" width="500px">
-    </td>
-  </tr>
-</table>
-<table align="center" border="1" cellpadding="10" cellspacing="0" style="border-collapse: collapse; border: 1px solid #ddd;">
-  <tr>
-    <td align="center" style="border: 1px solid #ddd;">
-      <strong>독서대 타이머</strong>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" style="border: 1px solid #ddd;">
-      <img src="gif/timer.gif" width="300px">
+      <img src="https://github.com/user-attachments/assets/477dcb19-c11a-44ea-b727-55a259acdfe2" width="500px">
     </td>
   </tr>
 </table>
