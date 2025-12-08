@@ -191,12 +191,12 @@
 <table align="center" border="1" cellpadding="10" cellspacing="0" style="border-collapse: collapse; border: 1px solid #ddd;">
   <tr>
     <td align="center" style="border: 1px solid #ddd;">
-      <strong>책갈피 추가 및 조회</strong>
+      <strong>템플릿 코스 관리</strong>
     </td>
   </tr>
   <tr>
     <td align="center" style="border: 1px solid #ddd;">
-      <img src="gif/bookMarkAdd.gif" width="300px">
+      <img src="https://github.com/user-attachments/assets/32d51568-9efb-4322-b4d6-899de6e70eb6" width="500px">
     </td>
   </tr>
 </table>
